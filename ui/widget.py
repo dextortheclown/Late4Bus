@@ -3,6 +3,8 @@ import threading
 import queue
 import os
 from datetime import datetime
+import pystray
+from PIL import Image
 
 from api.bus import get_bus_arrivals
 from data.last_trains import get_last_train_info, LINE_COLORS
@@ -62,6 +64,11 @@ class TransitWidget(ctk.CTk):
     def _setup_window(self):
         ctk.set_appearance_mode("dark")
         self.overrideredirect(True)
+        self.wm_attributes("-toolwindow", True)
+        self.withdraw()
+        self.update()
+        self._setup_tray()
+        self.after(100, self.deiconify)
         self.attributes("-alpha", 0.96)
         self.configure(fg_color=DARK_BG)
         self.title("Late4Bus")
@@ -167,6 +174,33 @@ class TransitWidget(ctk.CTk):
         self._resize_edge = None
         _save_widget_geometry(self.winfo_x(), self.winfo_y(),
                             self.winfo_width(), self.winfo_height())
+        
+    def _setup_tray(self):
+        try:
+            icon_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "icon.ico")
+            image = Image.open(icon_path)
+        except Exception:
+            # Fallback to a plain colored image if icon not found
+            image = Image.new("RGB", (64, 64), color="#3b82f6")
+
+        menu = pystray.Menu(
+            pystray.MenuItem("Show", self._show_widget, default=True),
+            pystray.MenuItem("Settings", lambda: self.after(0, self._open_settings)),
+            pystray.Menu.SEPARATOR,
+            pystray.MenuItem("Quit", self._quit_app)
+        )
+
+        self._tray_icon = pystray.Icon("Late4Bus", image, "Late4Bus", menu)
+
+        import threading
+        threading.Thread(target=self._tray_icon.run, daemon=True).start()
+
+    def _show_widget(self):
+        self.after(0, self.deiconify)
+
+    def _quit_app(self):
+        self._tray_icon.stop()
+        self.after(0, self.destroy)
 
     # ------------------------------------------------------------------
     # Base UI frame
@@ -201,7 +235,7 @@ class TransitWidget(ctk.CTk):
             self.header, text="✕", width=28, height=24,
             fg_color="transparent", hover_color="#3f1515",
             font=("SF Pro Display", 12), text_color=TEXT_MUTED,
-            corner_radius=6, command=self.destroy)
+            corner_radius=6, command=self._hide_to_tray)
         close_btn.pack(side="right", padx=(4, 0))
 
         # Scrollable content area
@@ -219,6 +253,9 @@ class TransitWidget(ctk.CTk):
 
         self._render_content()
 
+    def _hide_to_tray(self):
+        self.withdraw()
+
     def _tick_clock(self):
         self.clock_label.configure(text=datetime.now().strftime("%H:%M"))
         self.after(10000, self._tick_clock)
@@ -231,6 +268,10 @@ class TransitWidget(ctk.CTk):
         for w in self.content.winfo_children():
             w.destroy()
         self._section_widgets.clear()
+        self._bus_labels = {}
+        self._expanded = {}
+        self._body_frames = {}
+        self.arrow_labels = {}
 
         config = load_config()
         bus_stops = config.get("bus_stops", [])
