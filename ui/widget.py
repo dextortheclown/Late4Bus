@@ -639,11 +639,12 @@ class TransitWidget(ctk.CTk):
                 kind = item[0]
                 if kind == "bus":
                     _, stop_code, data = item
+                    if data is None:
+                        data = {"error": "No response received", "services": []}
                     self._fill_bus_stop_data(stop_code, data)
                 elif kind == "status":
                     _, ts, _ = item
-                    self.status_label.configure(
-                        text=f"Updated {ts}")
+                    self.status_label.configure(text=f"Updated {ts}")
         except queue.Empty:
             pass
         self.after(500, self._process_queue)

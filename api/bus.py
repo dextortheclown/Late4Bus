@@ -77,8 +77,8 @@ def get_bus_arrivals(stop_code: str, service_no: str = ""):
     services = []
     for svc in data.get("Services", []):
         buses = []
-        for key in ("NextBus", "NextBus2", "NextBus3"):
-            bus = svc.get(key, {})
+        for bus_key in ("NextBus", "NextBus2", "NextBus3"):
+            bus = svc.get(bus_key, {})
             arrival = bus.get("EstimatedArrival", "")
             load = bus.get("Load", "")
             bus_type = bus.get("Type", "")
