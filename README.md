@@ -29,7 +29,10 @@ Desktop application for checking bus timings and last train details. Made for th
 
 ## Screenshots
 
-> Add your screenshots here.
+<img width="502" height="550" alt="image" src="https://github.com/user-attachments/assets/b3bc3051-5b4c-453f-bfe6-d066ea8e59ae" />
+<img width="732" height="906" alt="Screenshot 2026-05-05 195058" src="https://github.com/user-attachments/assets/3dd48d33-dd34-4ff9-8fad-f481ffcf6624" />
+<img width="754" height="924" alt="image" src="https://github.com/user-attachments/assets/913dc6d0-f357-44f9-b5fc-1de5f1ddfecc" />
+
 
 ---
 
