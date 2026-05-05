@@ -86,7 +86,10 @@ class OnboardingWindow(ctk.CTkToplevel):
         self.verify_btn.pack(fill="x", padx=20, pady=(0, 20))
 
     def _toggle_show(self):
-        self.key_entry.configure(show="" if self.show_var.get() else "*")
+        try:
+            self.key_entry.configure(show="" if self.show_var.get() else "*")
+        except Exception:
+            pass
 
     def _verify_key(self):
         key = self.key_entry.get().strip()
@@ -114,25 +117,34 @@ class OnboardingWindow(ctk.CTkToplevel):
         threading.Thread(target=worker, daemon=True).start()
 
     def _on_verify_result(self, key, success):
-        if success:
-            self._set_status("Connected successfully.", GREEN)
-            save_api_key(key)
-            self.after(800, lambda: self._open_settings(key))
-        else:
-            self._set_status("Could not connect. Check your API key and try again.", RED)
-            self.verify_btn.configure(state="normal", text="Verify & Continue")
+        try:
+            if success:
+                self._set_status("Connected successfully.", GREEN)
+                save_api_key(key)
+                self.after(800, lambda: self._open_settings(key))
+            else:
+                self._set_status("Could not connect. Check your API key and try again.", RED)
+                self.verify_btn.configure(state="normal", text="Verify & Continue")
+        except Exception:
+            pass
 
     def _open_settings(self, api_key):
-        self.destroy()
-        from ui.settings import SettingsWindow
-        SettingsWindow(
-            self.master,
-            on_save_callback=lambda: self.on_complete_callback(api_key)
-                          if self.on_complete_callback else None
-        )
+        try:
+            self.destroy()
+            from ui.settings import SettingsWindow
+            SettingsWindow(
+                self.master,
+                on_save_callback=lambda: self.on_complete_callback(api_key)
+                            if self.on_complete_callback else None
+            )
+        except Exception:
+            pass
 
     def _set_status(self, msg, color):
-        self.status_label.configure(text=msg, text_color=color)
+        try:
+            self.status_label.configure(text=msg, text_color=color)
+        except Exception:
+            pass
 
     def _on_close(self):
         # Allow closing onboarding without crashing the app

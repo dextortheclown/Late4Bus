@@ -543,8 +543,10 @@ class TransitWidget(ctk.CTk):
         if not container:
             return
 
+        if data is None:
+            data = {"error": "No response received", "services": []}
+
         if data.get("error"):
-            # Only rebuild on error state
             for w in container.winfo_children():
                 w.destroy()
             ctk.CTkLabel(container, text=f"Error: {data['error']}",
@@ -559,30 +561,31 @@ class TransitWidget(ctk.CTk):
                         font=("SF Pro Display", 11), text_color=TEXT_MUTED).pack(pady=8)
             return
 
-        # Track per-stop label references across refreshes
         self._bus_labels = getattr(self, "_bus_labels", {})
         existing = self._bus_labels.get(stop_code)
-
-        # If services changed (different set of buses), do a full rebuild once
         incoming_services = [s["service_no"] for s in services]
-        if existing and existing.get("services") == incoming_services:
-            # Just update the time labels in place — no flicker
-            for svc in services:
-                svc_no = svc["service_no"]
-                for i, bus in enumerate(svc["buses"][:3]):
-                    mins = bus["minutes"]
-                    col = _load_color(mins)
-                    lbl_text = _mins_label(mins)
-                    bus_type = bus.get("type_label", "")
-                    label_key = f"{svc_no}_{i}_time"
-                    type_key  = f"{svc_no}_{i}_type"
-                    if label_key in existing:
-                        existing[label_key].configure(text=f" {lbl_text}", text_color=col)
-                    if type_key in existing:
-                        existing[type_key].configure(text=bus_type)
-            return
 
-        # Full rebuild (first load or service list changed)
+        if existing and existing.get("services") == incoming_services:
+            try:
+                for svc in services:
+                    svc_no = svc["service_no"]
+                    for i, bus in enumerate(svc["buses"][:3]):
+                        mins = bus["minutes"]
+                        col = _load_color(mins)
+                        lbl_text = _mins_label(mins)
+                        bus_type = bus.get("type_label", "")
+                        label_key = f"{svc_no}_{i}_time"
+                        type_key = f"{svc_no}_{i}_type"
+                        if label_key in existing:
+                            existing[label_key].configure(text=f" {lbl_text}", text_color=col)
+                        if type_key in existing:
+                            existing[type_key].configure(text=bus_type)
+                return
+            except Exception:
+                # Label references are stale, fall through to full rebuild
+                self._bus_labels.pop(stop_code, None)
+
+        # Full rebuild
         for w in container.winfo_children():
             w.destroy()
 

@@ -179,9 +179,12 @@ class SettingsWindow(ctk.CTkToplevel):
         threading.Thread(target=worker, daemon=True).start()
 
     def _on_bus_stops_loaded(self):
-        self.bus_loading_label.configure(
-            text=f"{len(self.all_bus_stops)} stops loaded. Start typing to search.")
-        self._render_bus_results([])
+        try:
+            self.bus_loading_label.configure(
+                text=f"{len(self.all_bus_stops)} stops loaded. Start typing to search.")
+            self._render_bus_results([])
+        except Exception:
+            pass
 
     def _add_bus_stop(self, stop):
         entry = {
@@ -213,13 +216,16 @@ class SettingsWindow(ctk.CTkToplevel):
         threading.Thread(target=worker, daemon=True).start()
 
     def _render_bus_results(self, results):
-        for w in self.bus_results_frame.winfo_children():
-            w.destroy()
+        try:
+            for w in self.bus_results_frame.winfo_children():
+                w.destroy()
+        except Exception:
+            return
 
         if not results:
             ctk.CTkLabel(self.bus_results_frame,
-                         text="Type to search for a bus stop",
-                         font=("SF Pro Display", 12), text_color=TEXT_MUTED).pack(pady=12)
+                        text="Type to search for a bus stop",
+                        font=("SF Pro Display", 12), text_color=TEXT_MUTED).pack(pady=12)
             return
 
         for stop in results:
