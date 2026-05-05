@@ -84,6 +84,28 @@ class SettingsWindow(ctk.CTkToplevel):
                     progress_color=ACCENT,
                     width=44, height=22,
                     command=self._toggle_startup).pack(side="right", padx=12, pady=10)
+        
+        from utils.config_manager import get_minimize_to_tray, save_minimize_to_tray
+
+        tray_frame = ctk.CTkFrame(self, fg_color=CARD_BG, corner_radius=8)
+        tray_frame.pack(fill="x", padx=16, pady=(0, 4))
+
+        ctk.CTkLabel(tray_frame, text="Minimise to tray",
+                    font=("SF Pro Display", 12, "bold"),
+                    text_color=TEXT_PRIMARY).pack(side="left", padx=12, pady=10)
+
+        ctk.CTkLabel(tray_frame, text="Hide to system tray instead of quitting when X is clicked",
+                    font=("SF Pro Display", 11),
+                    text_color=TEXT_MUTED).pack(side="left")
+
+        self.tray_var = ctk.BooleanVar(value=get_minimize_to_tray())
+        ctk.CTkSwitch(tray_frame,
+                    text="",
+                    variable=self.tray_var,
+                    fg_color="#1e3a5f",
+                    progress_color=ACCENT,
+                    width=44, height=22,
+                    command=self._toggle_tray).pack(side="right", padx=12, pady=10)
 
         # API Key section
         api_frame = ctk.CTkFrame(self, fg_color=CARD_BG, corner_radius=8)
@@ -505,3 +527,7 @@ class SettingsWindow(ctk.CTkToplevel):
     def _toggle_startup(self):
         from utils.config_manager import set_startup
         set_startup(self.startup_var.get())
+
+    def _toggle_tray(self):
+        from utils.config_manager import save_minimize_to_tray
+        save_minimize_to_tray(self.tray_var.get())

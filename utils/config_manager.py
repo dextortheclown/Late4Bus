@@ -55,7 +55,10 @@ DEFAULT_CONFIG = {
     "widget": {
         "x": 100,
         "y": 100,
-        "refresh_interval": 30
+        "width": 360,
+        "height": 400,
+        "refresh_interval": 30,
+        "minimize_to_tray": True
     }
 }
 
@@ -122,4 +125,12 @@ def get_api_key() -> str:
 def save_api_key(key: str):
     config = load_config()
     config["api_key"] = key.strip()
+    save_config(config)
+
+def get_minimize_to_tray() -> bool:
+    return load_config().get("widget", {}).get("minimize_to_tray", True)
+
+def save_minimize_to_tray(value: bool):
+    config = load_config()
+    config["widget"]["minimize_to_tray"] = value
     save_config(config)

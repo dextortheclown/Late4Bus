@@ -235,7 +235,7 @@ class TransitWidget(ctk.CTk):
             self.header, text="✕", width=28, height=24,
             fg_color="transparent", hover_color="#3f1515",
             font=("SF Pro Display", 12), text_color=TEXT_MUTED,
-            corner_radius=6, command=self._hide_to_tray)
+            corner_radius=6, command=self._on_close)
         close_btn.pack(side="right", padx=(4, 0))
 
         # Scrollable content area
@@ -716,3 +716,10 @@ class TransitWidget(ctk.CTk):
         if self._refresh_job:
             self.after_cancel(self._refresh_job)
         self._start_refresh_loop()
+
+    def _on_close(self):
+        from utils.config_manager import get_minimize_to_tray
+        if get_minimize_to_tray():
+            self._hide_to_tray()
+        else:
+            self._quit_app()

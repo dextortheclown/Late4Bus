@@ -1,6 +1,6 @@
 [Setup]
 AppName=Late4Bus
-AppVersion=1.1.1
+AppVersion=1.2.0
 AppPublisher=Dexter Wong
 AppPublisherURL=https://github.com/dextortheclown/late4bus
 AppSupportURL=https://github.com/dextortheclown/late4bus/issues
@@ -9,7 +9,7 @@ DefaultDirName={autopf}\Late4Bus
 DefaultGroupName=Late4Bus
 AllowNoIcons=yes
 OutputDir=installer_output
-OutputBaseFilename=Late4Bus_Setup_v1.1.1
+OutputBaseFilename=Late4Bus_Setup_v1.2.0
 SetupIconFile=icon.ico
 Compression=lzma
 SolidCompression=yes
