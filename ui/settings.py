@@ -25,10 +25,12 @@ class SettingsWindow(ctk.CTkToplevel):
         self.config_data = load_config()
         self.all_bus_stops = []
         self.bus_stops_loaded = False
+        self._search_debounce_job = None
 
         self.title("Late4Bus - Settings")
         self.geometry("700x850")
-        self.resizable(False, False)
+        self.minsize(600, 600)
+        self.resizable(True, True)
         self.configure(fg_color=DARK_BG)
         self.grab_set()
 
@@ -40,24 +42,28 @@ class SettingsWindow(ctk.CTkToplevel):
     # ------------------------------------------------------------------
 
     def _build_ui(self):
+        # Main container uses grid so rows can expand properly
+        self.grid_rowconfigure(1, weight=1)   # tab view row expands
+        self.grid_columnconfigure(0, weight=1)
+
         # Header
         header = ctk.CTkFrame(self, fg_color=CARD_BG, corner_radius=0, height=60)
-        header.pack(fill="x")
+        header.grid(row=0, column=0, sticky="ew")
         header.pack_propagate(False)
         ctk.CTkLabel(header, text="Settings", font=("SF Pro Display", 20, "bold"),
-                     text_color=TEXT_PRIMARY).pack(side="left", padx=20, pady=15)
+                    text_color=TEXT_PRIMARY).pack(side="left", padx=20, pady=15)
         ctk.CTkLabel(header, text="Choose your bus stops and MRT stations",
-                     font=("SF Pro Display", 13), text_color=TEXT_MUTED).pack(side="left", padx=4, pady=15)
+                    font=("SF Pro Display", 13), text_color=TEXT_MUTED).pack(side="left", padx=4, pady=15)
 
-        # Tabs
+        # Tab view — fills all available vertical space
         self.tab_view = ctk.CTkTabview(self, fg_color=DARK_BG,
-                                       segmented_button_fg_color=CARD_BG,
-                                       segmented_button_selected_color=ACCENT,
-                                       segmented_button_selected_hover_color=ACCENT_HOVER,
-                                       segmented_button_unselected_color=CARD_BG,
-                                       segmented_button_unselected_hover_color="#2a2a2a",
-                                       text_color=TEXT_PRIMARY)
-        self.tab_view.pack(fill="both", expand=True, padx=16, pady=(8, 0))
+                                    segmented_button_fg_color=CARD_BG,
+                                    segmented_button_selected_color=ACCENT,
+                                    segmented_button_selected_hover_color=ACCENT_HOVER,
+                                    segmented_button_unselected_color=CARD_BG,
+                                    segmented_button_unselected_hover_color="#2a2a2a",
+                                    text_color=TEXT_PRIMARY)
+        self.tab_view.grid(row=1, column=0, sticky="nsew", padx=16, pady=(8, 0))
 
         self.tab_view.add("Bus Stops")
         self.tab_view.add("MRT Stations")
@@ -65,82 +71,72 @@ class SettingsWindow(ctk.CTkToplevel):
         self._build_bus_tab(self.tab_view.tab("Bus Stops"))
         self._build_mrt_tab(self.tab_view.tab("MRT Stations"))
 
-        startup_frame = ctk.CTkFrame(self, fg_color=CARD_BG, corner_radius=8)
-        startup_frame.pack(fill="x", padx=16, pady=(0, 4))
+        # Bottom section — stacks below tabs, does not expand
+        bottom = ctk.CTkFrame(self, fg_color=DARK_BG)
+        bottom.grid(row=2, column=0, sticky="ew", padx=16, pady=(4, 0))
+        bottom.grid_columnconfigure(0, weight=1)
 
+        # Startup toggle
+        from utils.config_manager import get_startup_enabled, get_minimize_to_tray
+
+        startup_frame = ctk.CTkFrame(bottom, fg_color=CARD_BG, corner_radius=8)
+        startup_frame.grid(row=0, column=0, sticky="ew", pady=(0, 4))
         ctk.CTkLabel(startup_frame, text="Launch at startup",
                     font=("SF Pro Display", 12, "bold"),
                     text_color=TEXT_PRIMARY).pack(side="left", padx=12, pady=10)
-
         ctk.CTkLabel(startup_frame, text="Automatically open Late4Bus when Windows starts",
                     font=("SF Pro Display", 11),
                     text_color=TEXT_MUTED).pack(side="left")
-
         self.startup_var = ctk.BooleanVar(value=get_startup_enabled())
-        ctk.CTkSwitch(startup_frame,
-                    text="",
-                    variable=self.startup_var,
-                    fg_color="#1e3a5f",
-                    progress_color=ACCENT,
+        ctk.CTkSwitch(startup_frame, text="", variable=self.startup_var,
+                    fg_color="#1e3a5f", progress_color=ACCENT,
                     width=44, height=22,
                     command=self._toggle_startup).pack(side="right", padx=12, pady=10)
-        
-        from utils.config_manager import get_minimize_to_tray, save_minimize_to_tray
 
-        tray_frame = ctk.CTkFrame(self, fg_color=CARD_BG, corner_radius=8)
-        tray_frame.pack(fill="x", padx=16, pady=(0, 4))
-
+        # Tray toggle
+        tray_frame = ctk.CTkFrame(bottom, fg_color=CARD_BG, corner_radius=8)
+        tray_frame.grid(row=1, column=0, sticky="ew", pady=(0, 4))
         ctk.CTkLabel(tray_frame, text="Minimise to tray",
                     font=("SF Pro Display", 12, "bold"),
                     text_color=TEXT_PRIMARY).pack(side="left", padx=12, pady=10)
-
         ctk.CTkLabel(tray_frame, text="Hide to system tray instead of quitting when X is clicked",
                     font=("SF Pro Display", 11),
                     text_color=TEXT_MUTED).pack(side="left")
-
         self.tray_var = ctk.BooleanVar(value=get_minimize_to_tray())
-        ctk.CTkSwitch(tray_frame,
-                    text="",
-                    variable=self.tray_var,
-                    fg_color="#1e3a5f",
-                    progress_color=ACCENT,
+        ctk.CTkSwitch(tray_frame, text="", variable=self.tray_var,
+                    fg_color="#1e3a5f", progress_color=ACCENT,
                     width=44, height=22,
                     command=self._toggle_tray).pack(side="right", padx=12, pady=10)
 
-        # API Key section
-        api_frame = ctk.CTkFrame(self, fg_color=CARD_BG, corner_radius=8)
-        api_frame.pack(fill="x", padx=16, pady=(0, 4))
-
+        # API key
+        api_frame = ctk.CTkFrame(bottom, fg_color=CARD_BG, corner_radius=8)
+        api_frame.grid(row=2, column=0, sticky="ew", pady=(0, 4))
         ctk.CTkLabel(api_frame, text="LTA DataMall API Key",
-                     font=("SF Pro Display", 12, "bold"),
-                     text_color=TEXT_PRIMARY).pack(side="left", padx=12, pady=10)
-
+                    font=("SF Pro Display", 12, "bold"),
+                    text_color=TEXT_PRIMARY).pack(side="left", padx=12, pady=10)
         from utils.config_manager import get_api_key
         self.api_key_entry = ctk.CTkEntry(
-            api_frame,
-            placeholder_text="API key",
+            api_frame, placeholder_text="API key",
             fg_color="#111", border_color=CARD_BORDER,
-            text_color=TEXT_PRIMARY,
-            font=("SF Pro Display", 12),
-            height=32, corner_radius=6,
-            show="*", width=220)
+            text_color=TEXT_PRIMARY, font=("SF Pro Display", 12),
+            height=32, corner_radius=6, show="*", width=220)
         self.api_key_entry.insert(0, get_api_key())
         self.api_key_entry.pack(side="right", padx=12, pady=10)
 
-        # Save button
-        btn_frame = ctk.CTkFrame(self, fg_color=DARK_BG, height=60)
-        btn_frame.pack(fill="x", padx=16, pady=12)
+        # Save / Cancel buttons
+        btn_frame = ctk.CTkFrame(bottom, fg_color=DARK_BG, height=60)
+        btn_frame.grid(row=3, column=0, sticky="ew", pady=(0, 12))
         btn_frame.pack_propagate(False)
         ctk.CTkButton(btn_frame, text="Save & Apply",
-                      fg_color=ACCENT, hover_color=ACCENT_HOVER,
-                      font=("SF Pro Display", 14, "bold"),
-                      corner_radius=8, height=40,
-                      command=self._save).pack(side="right")
+                    fg_color=ACCENT, hover_color=ACCENT_HOVER,
+                    font=("SF Pro Display", 14, "bold"),
+                    corner_radius=8, height=40,
+                    command=self._save).pack(side="right")
         ctk.CTkButton(btn_frame, text="Cancel",
-                      fg_color=CARD_BG, hover_color="#222",
-                      font=("SF Pro Display", 14),
-                      corner_radius=8, height=40,
-                      command=self.destroy).pack(side="right", padx=(0, 8))
+                    fg_color=CARD_BG, hover_color="#222",
+                    font=("SF Pro Display", 14),
+                    corner_radius=8, height=40,
+                    command=self.destroy).pack(side="right", padx=(0, 8))
 
     # ------------------------------------------------------------------
     # Bus Stops Tab
