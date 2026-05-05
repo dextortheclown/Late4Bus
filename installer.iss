@@ -43,3 +43,4 @@ Filename: "{app}\Late4Bus.exe"; Description: "Launch Late4Bus now"; Flags: nowai
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}"
+Type: filesandordirs; Name: "{userappdata}\Late4Bus"
