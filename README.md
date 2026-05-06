@@ -68,7 +68,7 @@ Your API key is saved locally to your AppData folder and is never transmitted an
 ### Option A — Download the installer (Recommended)
 
 1. Go to the [Releases](../../releases) page
-2. Download `Late4Bus_Setup_v1.0.0.exe`
+2. Download latest version
 3. Run the installer and follow the prompts
 4. Launch Late4Bus from your desktop or Start Menu
 
